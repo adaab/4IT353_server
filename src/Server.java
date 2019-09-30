@@ -1,53 +1,38 @@
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class Main {
-    public static ServerSocket serverSocket;
-    public static ClientList clients;
-    public static Vlakno mojeVlakno;
+public class Server {
+    public boolean bezim;
+    public String text;
+    public BufferedReader vstup;
+    public PrintWriter vystup;
+    public Vlakno vlakno;
 
-    public static void main(String[] args) {
-        try {
-            serverSocket = new ServerSocket(8000);
-            System.out.println("Server běží");
-            clients = new ClientList();
-            while(true){
-                Socket socket = serverSocket.accept();
-                mojeVlakno = new Vlakno(socket, clients);
-                Thread vlakno = new Thread(mojeVlakno);
-                vlakno.start();
-                clients.pridejKlienta(mojeVlakno);
-            }
-            /*spojeni = serverSocket.accept();
-            vstup = new BufferedReader(new InputStreamReader((spojeni.getInputStream()), "UTF-8"));
-            vystup = new PrintWriter(new OutputStreamWriter(spojeni.getOutputStream(), "UTF-8"), true);
-            Main.zpracujPrikaz();*/
-        } catch (UnknownHostException e) {
-            System.out.println(e);
-        } catch (IOException i) {
-            System.out.println(i);
-        }
-        System.out.println("konec");
+
+    public Server(BufferedReader vstup, PrintWriter vystup, Vlakno vlakno){
+        this.vstup = vstup;
+        this.vystup = vystup;
+        this.vlakno = vlakno;
+        zpracujPrikaz();
     }
 
     /*
-    public static void prijimej(){
+    public void spojSe(){
         try {
+            spojeni = serverSocket.accept();
             vstup = new BufferedReader(new InputStreamReader((spojeni.getInputStream()), "UTF-8"));
             vystup = new PrintWriter(new OutputStreamWriter(spojeni.getOutputStream(), "UTF-8"), true);
-            Main.zpracujPrikaz();
+        } catch(IOException e){
+            System.out.println(e);
         }
-        catch(IOException e){
-        System.out.println(e);
-        }
-    }
+     */
 
-    public static void zpracujPrikaz() {
+
+    public void zpracujPrikaz() {
         HashSet<String> zaznamy = new HashSet<>();
         HashMap<String, String> prikazy = new HashMap<>();
         prikazy.put("USER", "uživatel");
@@ -60,6 +45,12 @@ public class Main {
                 String textParse[] = text.split(" ", 2);
                 String prikaz = textParse[0];
                 //String zbytek = textParse[1];
+                /*
+                if (text.equals("NEW CLIENT")) {
+                    Thread vlakno = new Thread(new Vlakno());
+                    vlakno.run();
+                */
+
                 boolean existuje = false;
                 for (String hledane : prikazy.keySet()) {
                     if (hledane.equals(prikaz)) {
@@ -76,15 +67,26 @@ public class Main {
                         break;
                     } else {
                         vystup.println("OK");
+                        odesliOstatnim(text);
                     }
                 } else {
                     System.out.println("neplatný příkaz");
                     vystup.println("neplatný příkaz");
                 }
-            } catch (IOException e) {
-                System.out.println(e);
+
+                } catch(IOException e){
+                    System.out.println(e);
+                }
+
+        }
+    }
+
+    public void odesliOstatnim(String text){
+        for(int i = 0; i < vlakno.getClients().getLength(); i++){
+            if(i != vlakno.getMyIndexInClients()){
+                vlakno.getClients().getVlakno(i).vystup.println("text");
             }
         }
-    }*/
-}
+    }
 
+}
